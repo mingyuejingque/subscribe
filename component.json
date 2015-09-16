@@ -1,0 +1,6 @@
+{
+'repos':'http://github.com/huya-fed/subscribe',
+'version':'v1.0.0',
+'name': 'subscribe',
+'main': 'subscribe.js'
+}
