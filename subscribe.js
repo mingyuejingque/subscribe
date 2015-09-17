@@ -1,3 +1,7 @@
+/**
+ * 虎牙订阅模块
+ * https://github.com/huya-fed/subscribe
+ */
 (function(exports){
 
     var yyuid = getCookie('yyuid');
@@ -65,7 +69,6 @@
     var instanceCache = {};
 
     function subscribe (options) {
-
         if ( !(this instanceof subscribe) ) {
             return new subscribe(options)
         }
@@ -74,7 +77,6 @@
         var instance = instanceCache[options.aid];
 
         if (instance) {
-
             check(options.aid, function(subed){
                 options.init.call(instance, subed)
                 instance.changeCallbacks.add(options.change);
