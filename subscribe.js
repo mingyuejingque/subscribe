@@ -35,7 +35,7 @@
                 .fail(function(xhr, code) {
                     log('获取用户订阅列表失败：' + code)
                 })
-                .always(function(){
+                .always(function(){ 
                     isReady = true;
                     callbacks.fire()
                 })
