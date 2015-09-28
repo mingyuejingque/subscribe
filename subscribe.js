@@ -5,7 +5,7 @@
 (function(exports){
 
     var yyuid = getCookie('yyuid');
-    var anchorList = [];    // 用户订阅的主播
+    var subList = [];    // 用户的订阅列表
 
     // 查询是否订阅了该主播
     var check = (function(){
@@ -16,22 +16,20 @@
                 isReady = true;
             } 
             else {
-                // 获取用户订阅列表
+                // 获取用户的订阅列表
                 $.ajax({
-                    url: 'http://fw.huya.com/dispatch?do=subscribe&uid=' + yyuid,
+                    url: 'http://api.huya.com/subscribe/getSubscribeToListEx?from_type=1&from_key=' + yyuid,
                     type: 'GET',
                     dataType: 'JSONP',
                     cache: false
                 })
-                .done(function(res){
-                    if (res.status === 1000) {
-                        if (res.result && res.result.list && res.result.list.length) {
-                            $.each(res.result.list, function(i, o){
-                                o && (typeof o.activityId !== 'undefined') && anchorList.push(o.activityId)
-                            })
+                .done(function(data){
+                    if (data.result === 0) {
+                        if (data.list && data.list.length) {
+                            subList = data.list
                         }
                     } else {
-                        log('获取用户订阅列表失败：' + (res.message || res.status))
+                        log('获取用户订阅列表失败：' + data.result)
                     }
                 })
                 .fail(function(xhr, code) {
@@ -43,25 +41,37 @@
                 })
             }
 
-            function ck (aid) {
-                for (var i = 0, l = anchorList.length; i < l; i++) {
-                    if (aid == anchorList[i]) {
-                        return true
+            function ck (type, id) {
+                var o;
+
+                for (var i = 0, l = subList.length; i < l; i++) {
+                    o = subList[i] || {};
+
+                    if (type === 0) {
+                        if (o.aid == id) return true
+                    } else {
+                        if (o.type === type && o.key == id) return true
                     }
                 }
 
                 return false
             }
 
-            return function (aid, fn) {
+            return function (options) {
+                if ( !$.isPlainObject(options) ) return;
+
+                var type = options.type    // 订阅的目标的类型
+                var id = options.id    // 订阅的目标的id
+                var callback = typeof options.callback === 'function' ? options.callback : function () {}    // 处理查询结果的回调
+
                 if (isReady) {
-                    setTimeout(callback, 0)
+                    setTimeout(fn, 0)
                 } else {
-                    callbacks.add(callback)
+                    callbacks.add(fn)
                 }
 
-                function callback () {
-                    typeof fn === 'function' && fn( ck(aid) )
+                function fn () {
+                    callback( ck(type, id) )
                 }
             }
     })();
@@ -77,10 +87,14 @@
         var instance = instanceCache[options.aid];
 
         if (instance) {
-            check(options.aid, function(subed){
-                options.init.call(instance, subed)
-                instance.changeCallbacks.add(options.change);
-            });
+            check({
+                type: 0,
+                id: options.aid,
+                callback: function (subed) {
+                    options.init.call(instance, subed)
+                    instance.changeCallbacks.add(options.change);                    
+                }
+            })
 
             return instance
         } 
@@ -96,11 +110,14 @@
         // 更新订阅列表
         self.changeCallbacks.add(function(subed){
             if (subed) {
-                anchorList.push(aid)
+                subList.push({
+                    type: 0,
+                    aid: aid
+                })
             } else {
-                $.each(anchorList, function(i, id){
-                    if (aid == id) {
-                        anchorList.splice(i, 1);
+                $.each(subList, function(i, o){
+                    if (aid == o.aid) {
+                        subList.splice(i, 1);
                         return false    // break
                     } 
                 })                
@@ -108,10 +125,14 @@
         });
 
         // init
-        check(aid, function(subed){
-            self.subed = subed;
-            options.init.call(self, subed);
-            self.changeCallbacks.add(options.change);
+        check({
+            type: 0,
+            id: aid,
+            callback: function (subed) {            
+                self.subed = subed;
+                options.init.call(self, subed);
+                self.changeCallbacks.add(options.change);
+            }
         })
     }
 
