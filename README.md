@@ -1,5 +1,5 @@
 # subscribe
-#author: 蒙乐兴
+
 虎牙订阅模块
 
 * 使用方法 
