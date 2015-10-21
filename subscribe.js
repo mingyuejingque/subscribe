@@ -9,36 +9,42 @@
 
     // 查询是否订阅了该主播
     var check = (function(){
-            var callbacks = $.Callbacks();
-            var isReady = false;
+            var readyCallbacks = $.Callbacks();
+            var isReady = yyuid ? false : true;
+            var xhr = null;
 
-            if ( !yyuid ) {
-                isReady = true;
-            } 
-            else {
-                // 获取用户的订阅列表
-                $.ajax({
-                    url: 'http://api.huya.com/subscribe/getSubscribeToListEx?from_type=1&from_key=' + yyuid,
-                    type: 'GET',
-                    dataType: 'JSONP',
-                    cache: false
-                })
-                .done(function(data){
-                    if (data.result === 0) {
-                        if (data.list && data.list.length) {
-                            subList = data.list
-                        }
-                    } else {
-                        log('获取用户订阅列表失败：' + data.result)
+            function ready (fn) {
+                if (isReady) {
+                    setTimeout(fn, 0)
+                } else {
+                    readyCallbacks.add(fn)
+
+                    if (!xhr) {
+                        // 获取用户的订阅列表
+                        xhr = $.ajax({
+                            url: 'http://api.huya.com/subscribe/getSubscribeToListEx?from_type=1&from_key=' + yyuid,
+                            type: 'GET',
+                            dataType: 'JSONP',
+                            cache: false
+                        })
+                        .done(function(data){
+                            if (data.result === 0) {
+                                if (data.list && data.list.length) {
+                                    subList = data.list
+                                }
+                            } else {
+                                log('获取用户订阅列表失败：' + data.result)
+                            }
+                        })
+                        .fail(function(xhr, code) {
+                            log('获取用户订阅列表失败：' + code)
+                        })
+                        .always(function(){
+                            isReady = true;
+                            readyCallbacks.fire()
+                        })
                     }
-                })
-                .fail(function(xhr, code) {
-                    log('获取用户订阅列表失败：' + code)
-                })
-                .always(function(){ 
-                    isReady = true;
-                    callbacks.fire()
-                })
+                }
             }
 
             function ck (type, id) {
@@ -64,15 +70,9 @@
                 var id = options.id    // 订阅的目标的id
                 var callback = typeof options.callback === 'function' ? options.callback : function () {}    // 处理查询结果的回调
 
-                if (isReady) {
-                    setTimeout(fn, 0)
-                } else {
-                    callbacks.add(fn)
-                }
-
-                function fn () {
+                ready(function(){
                     callback( ck(type, id) )
-                }
+                })
             }
     })();
 
@@ -149,6 +149,12 @@
                 return
             }
 
+            if (this.isGaning) {
+                return
+            } else {
+                this.isGaning = true
+            }
+
             var self = this;
             var subed = self.subed;
             var aid = self.aid;
@@ -158,6 +164,9 @@
                 type: 'GET',
                 dataType: 'JSONP',
                 cache: false
+            })
+            .always(function(){
+                self.isGaning = false
             })
             .done(function(res){
 
@@ -209,8 +218,8 @@
         }
     }
 
-    function log (s) {
-        window.console && window.console.log && window.console.log(s)
+    function log () {
+        window.console && console.log && console.log.apply(console, arguments)
     }
 
     exports.subscribe = subscribe
