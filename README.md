@@ -51,8 +51,9 @@ var sub = subscribe({
 
     方法，与 options.change 功能相似，订阅状态发生改变时会触发 调用该方法时传入的回调 ，如
     ```javascript
+    // 更新订阅人数
     sub.change(function(subed){
-        alert(subed ? '订阅成功' : '取消订阅成功')
+        count.text(subed ? ++total : --total)
     });
     ```
 
