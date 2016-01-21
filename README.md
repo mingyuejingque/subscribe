@@ -18,7 +18,7 @@ var sub = subscribe({
 
         btn.text(subed ? '已订阅' : '订阅')
             .on('click', function(e){
-                self.gan()    // ！！！
+                self.toggle()    // ！！！
                 e.preventDefault()
             })
 
