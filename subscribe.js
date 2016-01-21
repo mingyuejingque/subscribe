@@ -225,7 +225,9 @@
     }
 
     function log () {
-        window.console && console.log && console.log.apply(console, arguments)
+        try {
+            return console.log.apply(console, arguments)
+        } catch (e) {}
     }
 
     return subscribe;
