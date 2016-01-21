@@ -2,7 +2,13 @@
  * 虎牙订阅模块
  * https://github.com/huya-fed/subscribe
  */
-(function(exports){
+(function (global, factory) {
+    if ( typeof define === 'function') {
+        define(['jquery'], factory)
+    } else {
+        global.subscribe = factory(jQuery)
+    }
+}(this, function($){
 
     var yyuid = getCookie('yyuid');
     var subList = [];    // 用户的订阅列表
@@ -222,5 +228,5 @@
         window.console && console.log && console.log.apply(console, arguments)
     }
 
-    exports.subscribe = subscribe
-})(window);
+    return subscribe;
+}));
