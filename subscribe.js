@@ -142,7 +142,19 @@
         })
     }
 
+    // 业务方可根据需要对该方法进行覆写
+    subscribe.login = function () {
+        try {
+            NAV_UTIL.login()
+        } catch (e) {
+            log('依赖的登录组件没有引入！')
+        }
+    }
+
     subscribe.prototype = {
+        toggle: function () {
+            return this.gan()
+        },
         gan: function () {
             // 初始化完成才能gan
             if ( !('subed' in this) ) {
@@ -151,7 +163,7 @@
 
             // 需要登录
             if (!yyuid)  {
-                login()
+                subscribe.login && subscribe.login()
                 return
             }
 
@@ -214,14 +226,6 @@
         }
 
         return cookies[key]
-    }
-
-    function login () {
-        try {
-            NAV_UTIL.login()
-        } catch (e) {
-            log('依赖的登录组件没有引入！')
-        }
     }
 
     function log () {
